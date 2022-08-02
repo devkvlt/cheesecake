@@ -143,3 +143,336 @@ func TestBoard_Clear(t *testing.T) {
 		})
 	}
 }
+
+func TestSquare_File(t *testing.T) {
+	tests := []struct {
+		name string
+		s    Square
+		want File
+	}{
+		{"A1", A1, FileA},
+		{"A8", A8, FileA},
+		{"H1", H1, FileH},
+		{"H8", H8, FileH},
+		{"99", 99, NoFile},
+		{"NoSquare", NoSquare, NoFile},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.s.File(); got != tt.want {
+				t.Errorf("Square.File() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestSquare_Rank(t *testing.T) {
+	tests := []struct {
+		name string
+		s    Square
+		want Rank
+	}{
+		{"A1", A1, Rank1},
+		{"A8", A8, Rank8},
+		{"H1", H1, Rank1},
+		{"H8", H8, Rank8},
+		{"99", 99, NoRank},
+		{"NoSquare", NoSquare, NoRank},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.s.Rank(); got != tt.want {
+				t.Errorf("Square.Rank() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestMakeSquare(t *testing.T) {
+	tests := []struct {
+		name string
+		f    File
+		r    Rank
+		want Square
+	}{
+		{"FileA Rank1", FileA, Rank1, A1},
+		{"FileA Rank8", FileA, Rank8, A8},
+		{"FileH Rank1", FileH, Rank1, H1},
+		{"FileH Rank8", FileH, Rank8, H8},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := MakeSquare(tt.f, tt.r); got != tt.want {
+				t.Errorf("NewSquare() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestOnSameDiag(t *testing.T) {
+	tests := []struct {
+		name string
+		s1   Square
+		s2   Square
+		want bool
+	}{
+		{"test 1", D4, G7, true},
+		{"test 2", D4, B6, true},
+		{"test 3", D4, F2, true},
+		{"test 4", D4, G1, true},
+		{"test 5", D4, D6, false},
+		{"test 6", D4, G4, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := OnSameDiag(tt.s1, tt.s2); got != tt.want {
+				t.Errorf("OnSameDiag() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestHaveSameColor(t *testing.T) {
+	tests := []struct {
+		name string
+		p1   Piece
+		p2   Piece
+		want bool
+	}{
+		{"test 1", BlackRook, BlackPawn, true},
+		{"test 2", BlackRook, WhiteRook, false},
+		{"test 3", BlackRook, NoPiece, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := HaveSameColor(tt.p1, tt.p2); got != tt.want {
+				t.Errorf("HaveSameColor() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestFile_Right(t *testing.T) {
+	tests := []struct {
+		name string
+		f    File
+		want File
+	}{
+		{"test 1", NoFile, NoFile},
+		{"test 2", 9, NoFile},
+		{"test 3", -99, NoFile},
+		{"test 4", FileA, FileB},
+		{"test 5", FileH, 9},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.f.Right(); got != tt.want {
+				t.Errorf("File.Right() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestFile_Left(t *testing.T) {
+	tests := []struct {
+		name string
+		f    File
+		want File
+	}{
+		{"test 1", NoFile, NoFile},
+		{"test 2", 9, NoFile},
+		{"test 3", -99, NoFile},
+		{"test 4", FileH, FileG},
+		{"test 5", FileA, NoFile},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.f.Left(); got != tt.want {
+				t.Errorf("File.Left() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestRank_Up(t *testing.T) {
+	tests := []struct {
+		name string
+		r    Rank
+		want Rank
+	}{
+		{"test 1", NoRank, NoRank},
+		{"test 2", 9, NoRank},
+		{"test 3", -99, NoRank},
+		{"test 4", Rank1, Rank2},
+		{"test 5", Rank8, 9},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.r.Up(); got != tt.want {
+				t.Errorf("Rank.Up() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestRank_Down(t *testing.T) {
+	tests := []struct {
+		name string
+		r    Rank
+		want Rank
+	}{
+		{"test 1", NoRank, NoRank},
+		{"test 2", 9, NoRank},
+		{"test 3", -99, NoRank},
+		{"test 4", Rank1, NoRank},
+		{"test 5", Rank8, Rank7},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.r.Down(); got != tt.want {
+				t.Errorf("Rank.Down() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestSquare_UpRight(t *testing.T) {
+	tests := []struct {
+		name string
+		s    Square
+		want Square
+	}{
+		{"test 1", E4, F5},
+		{"test 2", H1, NoSquare},
+		{"test 3", H8, NoSquare},
+		{"test 4", NoSquare, NoSquare},
+		{"test 5", 100, NoSquare},
+		{"test 6", -1, NoSquare},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.s.UpRight(); got != tt.want {
+				t.Errorf("Square.UpRight() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestSquare_UpLeft(t *testing.T) {
+	tests := []struct {
+		name string
+		s    Square
+		want Square
+	}{
+		{"test 1", E4, D5},
+		{"test 2", A1, NoSquare},
+		{"test 3", A8, NoSquare},
+		{"test 4", NoSquare, NoSquare},
+		{"test 5", 100, NoSquare},
+		{"test 6", -1, NoSquare},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.s.UpLeft(); got != tt.want {
+				t.Errorf("Square.UpLeft() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestSquare_DownRight(t *testing.T) {
+	tests := []struct {
+		name string
+		s    Square
+		want Square
+	}{
+		{"test 1", E4, F3},
+		{"test 2", A1, NoSquare},
+		{"test 3", H1, NoSquare},
+		{"test 4", NoSquare, NoSquare},
+		{"test 5", 100, NoSquare},
+		{"test 6", -1, NoSquare},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.s.DownRight(); got != tt.want {
+				t.Errorf("Square.DownRight() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestSquare_DownLeft(t *testing.T) {
+	tests := []struct {
+		name string
+		s    Square
+		want Square
+	}{
+		{"test 1", E4, D3},
+		{"test 2", A8, NoSquare},
+		{"test 3", A1, NoSquare},
+		{"test 4", H1, NoSquare},
+		{"test 5", NoSquare, NoSquare},
+		{"test 6", 100, NoSquare},
+		{"test 7", -1, NoSquare},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.s.DownLeft(); got != tt.want {
+				t.Errorf("Square.DownLeft() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestBoard_BishopCanMove(t *testing.T) {
+	tests := []struct {
+		name   string
+		b      Board
+		origin Square
+		target Square
+		want   bool
+	}{
+		{
+			"test 1: same color target",
+			Board{D4: WhiteBishop, G7: WhiteRook},
+			D4,
+			G7,
+			false,
+		},
+		{
+			"test 2: piece in between",
+			Board{D4: WhiteBishop, F6: WhiteKnight, G7: BlackRook},
+			D4,
+			G7,
+			false,
+		},
+		{
+			"test 3: valid move",
+			Board{D4: WhiteBishop, G7: BlackRook},
+			D4,
+			G7,
+			true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.b.BishopCanMove(tt.origin, tt.target); got != tt.want {
+				t.Errorf("Board.BishopCanMove() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

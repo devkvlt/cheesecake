@@ -3,6 +3,7 @@ package cheesecake
 import (
 	"errors"
 	"fmt"
+	"math"
 	"strings"
 )
 
@@ -134,12 +135,12 @@ func (p Piece) String() string {
 
 // IsValid reports whether a piece is one of the 12 valid pieces.
 func (p Piece) IsValid() bool {
-	return p >= 1 && p <= 12
+	return 1 <= p && p <= 12
 }
 
 // IsValid reports whether a square is one of the 64 valid squares.
 func (s Square) IsValid() bool {
-	return s >= 1 && s <= 64
+	return A1 <= s && s <= H8
 }
 
 // MakeBoard returns an empty board.
@@ -215,8 +216,209 @@ func (b Board) Move(origin, target Square) error {
 	if !p.IsValid() {
 		return errors.New("invalid piece on origin square")
 	}
+	if p == WhiteBishop || p == BlackBishop {
+		return errors.New("invalid move")
+	}
 
 	b[target] = p
 	delete(b, origin)
 	return nil
+}
+
+type File int
+type Rank int
+
+const (
+	NoFile File = iota
+	FileA
+	FileB
+	FileC
+	FileD
+	FileE
+	FileF
+	FileG
+	FileH
+)
+
+const (
+	NoRank Rank = iota
+	Rank1
+	Rank2
+	Rank3
+	Rank4
+	Rank5
+	Rank6
+	Rank7
+	Rank8
+)
+
+// IsValid reports whether the file f is valid.
+func (f File) IsValid() bool {
+	return FileA <= f && f <= FileH
+}
+
+// IsValid reports whether the file f is valid.
+func (r Rank) IsValid() bool {
+	return Rank1 <= r && r <= Rank8
+}
+
+// File returns the file of the sqaure s.
+func (s Square) File() File {
+	if !s.IsValid() {
+		return NoFile
+	}
+	return File((s-1)%8 + 1)
+}
+
+// Rank returns the rank of the square s.
+func (s Square) Rank() Rank {
+	if !s.IsValid() {
+		return NoRank
+	}
+	return Rank((s-1)/8 + 1)
+}
+
+// MakeSquare returns the square at file f and rank r.
+func MakeSquare(f File, r Rank) Square {
+	if !f.IsValid() || !r.IsValid() {
+		return NoSquare
+	}
+	return Square((r-1)*8 + Rank(f))
+}
+
+func (f File) Right() File {
+	if !f.IsValid() {
+		return NoFile
+	}
+	return f + 1
+}
+
+func (f File) Left() File {
+	if !f.IsValid() {
+		return NoFile
+	}
+	return f - 1
+}
+
+func (r Rank) Up() Rank {
+	if !r.IsValid() {
+		return NoRank
+	}
+	return r + 1
+}
+
+func (r Rank) Down() Rank {
+	if !r.IsValid() {
+		return NoRank
+	}
+	return r - 1
+}
+
+func (s Square) UpRight() Square {
+	f := s.File().Right()
+	r := s.Rank().Up()
+	if !f.IsValid() || !r.IsValid() {
+		return NoSquare
+	}
+	return MakeSquare(f, r)
+}
+
+func (s Square) DownRight() Square {
+	f := s.File().Right()
+	r := s.Rank().Down()
+	if !f.IsValid() || !r.IsValid() {
+		return NoSquare
+	}
+	return MakeSquare(f, r)
+}
+
+func (s Square) DownLeft() Square {
+	f := s.File().Left()
+	r := s.Rank().Down()
+	if !f.IsValid() || !r.IsValid() {
+		return NoSquare
+	}
+	return MakeSquare(f, r)
+}
+
+func (s Square) UpLeft() Square {
+	f := s.File().Left()
+	r := s.Rank().Up()
+	if !f.IsValid() || !r.IsValid() {
+		return NoSquare
+	}
+	return MakeSquare(f, r)
+}
+
+func OnSameDiag(s1, s2 Square) bool {
+	return math.Abs(float64(s1.File()-s2.File())) == math.Abs(float64(s1.Rank()-s2.Rank()))
+}
+
+type Color int
+
+const (
+	NoColor Color = iota
+	White
+	Black
+)
+
+// Color returns the Color of Piece p.
+func (p Piece) Color() Color {
+	return map[Piece]Color{
+		WhiteKing:   White,
+		WhiteQueen:  White,
+		WhiteRook:   White,
+		WhiteBishop: White,
+		WhiteKnight: White,
+		WhitePawn:   White,
+		BlackKing:   Black,
+		BlackQueen:  Black,
+		BlackRook:   Black,
+		BlackBishop: Black,
+		BlackKnight: Black,
+		BlackPawn:   Black,
+	}[p]
+}
+
+// HaveSameColor reports if two pieces are of the same color.
+func HaveSameColor(p1, p2 Piece) bool {
+	return p1.Color() == p2.Color()
+}
+
+// IsEmpty reports if the sqaure s is empty.
+func (b Board) IsEmpty(s Square) bool {
+	_, exists := b[s]
+	return !exists
+}
+
+// BishopCanMove reports whether a bishop on the origin square can move to the
+// target square.
+func (b Board) BishopCanMove(origin, target Square) bool {
+	// maybe check if there actually is a bishop on origin??
+	if !OnSameDiag(origin, target) || HaveSameColor(b[origin], b[target]) {
+		return false
+	}
+
+	// brute force: check paths in all 4 directions
+	// TODO: find a way to pick the right direction
+	directions := []func(Square) Square{
+		Square.UpRight,
+		Square.DownRight,
+		Square.DownLeft,
+		Square.UpLeft,
+	}
+
+	var current Square
+	for _, next := range directions {
+		current = next(origin)
+		for current.IsValid() {
+			// not empty and not target yet
+			if !b.IsEmpty(current) && current != target {
+				return false
+			}
+			current = next(current)
+		}
+	}
+
+	return true
 }
